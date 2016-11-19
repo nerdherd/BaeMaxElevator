@@ -22,7 +22,7 @@ public class Elevator extends Subsystem{
     private static Elevator elevator_instance = new Elevator();
     
 	/**
-	 * @return Drive subsystem instance
+	 * @return Elevator subsystem instance
 	 */
     public static synchronized Elevator getInstance() {
     	if (elevator_instance == null) {
@@ -65,6 +65,8 @@ public class Elevator extends Subsystem{
     	deltaVelocity = 0;
     	previousAccel = 0;
     	previousDecel = 0;
+    	
+    	m_motionProfileGenerator = MotionProfileGenerator.getInstance();
     }
     
     private void toggleButtons() {
@@ -89,8 +91,7 @@ public class Elevator extends Subsystem{
 //    	if (m_gettingValue) {
 //    		desiredPosition = SmartDashboard.getNumber("Desired Position");
 //    		m_startingTime = Timer.getFPGATimestamp();
-//    		m_motionProfileGenerator = new MotionProfileGenerator(desiredPosition - m_encoder.getRaw());
-//    		m_motionProfileGenerator.generateProfile();
+//    		m_motionProfileGenerator.generateProfile(desiredPosition - m_encoder.getRaw());
 //    	} else {
 //    		if (error != 0) {
 //    			previousError = error;

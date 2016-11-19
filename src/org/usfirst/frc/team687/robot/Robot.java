@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends IterativeRobot {
 	
 	Elevator elevator = Elevator.getInstance();
-    MultiLooper controllers = new MultiLooper("Controllers", 1/100.0);
+    MultiLooper controllers = new MultiLooper("Controllers", Constants.kClk);
 	
     public void robotInit() {
     	controllers.addLoopable(elevator);

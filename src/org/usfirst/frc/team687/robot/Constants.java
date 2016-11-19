@@ -8,8 +8,10 @@ package org.usfirst.frc.team687.robot;
  */
 public class Constants {
 	
+	public final static double kClk = 1/100.0;
 	public static double kMaxVelocity = convertVelocity(72.0);
 	public static double kMaxAccel = convertAccel(120.0);
+	public static double kMaxDecel = -convertAccel(120.0);
 	public static double kP = 1.0;
 	public static double kI = 1.5;
 	public static double kD = 0.0;
@@ -33,7 +35,11 @@ public class Constants {
 		return 2 * inchesPerSecond2 * Math.pow(100, 2);
 	}
 	
-	private static double convertSpeedToClk(double speed) {
+	private static double convertSpeedClk(double speed) {
 		return speed/100;
+	}
+	
+	private static double convertAccelClk(double accel) {
+		return accel/Math.pow(100, 2);
 	}
 }

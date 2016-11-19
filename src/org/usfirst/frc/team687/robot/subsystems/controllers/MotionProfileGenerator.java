@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 import org.usfirst.frc.team687.robot.Constants;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 /**
  * Trapezoidal motion profile generator for smoother distance control
  * 
@@ -12,58 +14,79 @@ import org.usfirst.frc.team687.robot.Constants;
  */
 public class MotionProfileGenerator {
 	
-	private static double distance;
-	private static double vmax = Constants.kMaxVelocity;
-	private static double a_max = Constants.kMaxAccel;
-	private static double clk = 1/100; //the period that the multilooper runs at
-	
+    private static MotionProfileGenerator generator_instance = new MotionProfileGenerator();
+    
 	/**
-	 * Data arrays
+	 * @return Motion Profile Generator instance
 	 */
-	public static ArrayList<Double> time_data = new ArrayList<Double>();
-	public static ArrayList<Double> velocity_data = new ArrayList<Double>();
-	public static ArrayList<Double> distance_data = new ArrayList<Double>();
-	public static ArrayList<Double> acceleration_data = new ArrayList<Double>();
-	
-	public MotionProfileGenerator(double dist) {
-		distance = dist;
-	}
+    public static synchronized MotionProfileGenerator getInstance() {
+    	if (generator_instance == null) {
+    		generator_instance = new MotionProfileGenerator();
+    	}
+        return generator_instance;
+    }
+    
+    private MotionProfileGenerator() { /* food is good */ }
+    
+	private double maxVelocity = Constants.kMaxVelocity;
+	private double maxAccel = Constants.kMaxAccel;
+	private double maxDecel = Constants.kMaxDecel;
+	private double clk = Constants.kClk; //the period that the multilooper runs at
+
+	private ArrayList<Double> time_data = new ArrayList<Double>();
+	private ArrayList<Double> velocity_data = new ArrayList<Double>();
+	private ArrayList<Double> distance_data = new ArrayList<Double>();
+	private ArrayList<Double> acceleration_data = new ArrayList<Double>();
 
 	/**
-	 * 3 stages - accelerate, cruising, decelerate
-	 * Loop through time and add data for each time interval to arrays
-	 * Don't account for jerk
+	 * Generate a trapezoidal motion profile
+	 * 
+	 * @param distance
 	 */
-	public void generateProfile() {
+	public void generateProfile(double distance) {
 		double time;
 		double x;
 		double v = 0;
 		
-		boolean isTriangular = isTriangular();
-		for (time = 0; time < (vmax/a_max); time += clk){
-			x = (0.5 * a_max * Math.pow(time, (double)2));
-			v = a_max * time;
-			addData(time, v, x, a_max);
+		SmartDashboard.putNumber("Desired Distance", distance);
+		double accelTime = maxVelocity/maxAccel;
+		SmartDashboard.putNumber("Acceleration Time", accelTime);
+		double accelAndCruiseTime = distance/maxVelocity;
+		SmartDashboard.putNumber("Acceleration + Cruise Time", accelAndCruiseTime);
+		double decelTime = -maxVelocity/maxDecel;
+		SmartDashboard.putNumber("Deceleration Time", decelTime);
+		double end = accelAndCruiseTime + decelTime;
+		SmartDashboard.putNumber("Expected End Time", end);
+		
+		boolean triangular = isTriangular(distance);
+		SmartDashboard.putBoolean("Is triangular", triangular);
+		for (time = 0; time < accelTime; time += clk){
+			x = (0.5 * maxAccel * Math.pow(time, (double)2));
+			v = maxAccel * time;
+			addData(time, v, x, maxAccel);
 		}
-		if (isTriangular == false){
-			for (time = vmax/a_max; time < (distance/vmax); time += clk){
-				x = (0.5 * (Math.pow(vmax, 2) / a_max)) + (vmax * (time - (vmax/a_max)));
-				v = (vmax);
+		if (triangular == false){
+			for (time = accelTime; time < accelAndCruiseTime; time += clk){
+				x = (0.5 * (Math.pow(maxVelocity, 2) / maxAccel)) + (maxVelocity * (time - (maxVelocity/maxAccel)));
+				v = (maxVelocity);
 				addData(time, v, x, 0);
 			}
 		}
-		double end_of_second_stage = (vmax/a_max) + (distance/vmax);
-		for (time = distance/vmax; time <= end_of_second_stage; time += clk){
-			x = (double)(distance - 0.5 * a_max * Math.pow((time-((vmax/a_max)+(distance/vmax))), 2));
-			v = a_max * ((vmax/a_max)+(distance/vmax)-time);
-			addData(time, v, x, -a_max);
+		for (time = accelAndCruiseTime; time <= end; time += clk){
+			x = (double)(distance + 0.5 * maxDecel * Math.pow((time-end), 2));
+			v = maxVelocity + maxDecel * (time - accelAndCruiseTime);
+			if (v < 0.0001) {
+				v = 0;
+			}
+			addData(time, v, x, maxDecel);
 		}
+		SmartDashboard.putNumber("Actual time to finish motion", time);
 	}
 	
 	/**
-	 * Adds data to array lists
+	 * Add data to array lists
 	 * 
-	 * @param time
+	 * @param time index
 	 * @param velocity
 	 * @param distance
 	 * @param acceleration
@@ -77,14 +100,14 @@ public class MotionProfileGenerator {
 	
 	/**
 	 * Check if the maximum velocity can actually be reached
-	 * If the maximum velocity can't be reached, adjust it to the final velocity that it can reach
+	 * If the maximum velocity can't be reached, adjust it to the final velocity that it can reach with some tolerance
 	 * Maximum velocity can't be reached = triangular motion profile
 	 */
-	private boolean isTriangular() {
+	private boolean isTriangular(double distance) {
 		double mid = distance/2;
-		double vFinal = Math.pow(2 * a_max * mid, 0.5);
-		if (vFinal < vmax){
-			vmax = vFinal;
+		double vFinal = Math.pow(2 * maxAccel * mid, 0.5);
+		if (vFinal < maxVelocity){
+			maxVelocity = vFinal - (maxVelocity/10);
 			return true;
 		} else {
 			return false;
