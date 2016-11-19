@@ -19,13 +19,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class Elevator extends Subsystem{
 
-    private static Elevator drive_instance = new Elevator();
+    private static Elevator elevator_instance = new Elevator();
     
 	/**
 	 * @return Drive subsystem instance
 	 */
     public static Elevator getInstance() {
-        return drive_instance;
+        return elevator_instance;
     }
     
     private Joystick m_articJoy;
@@ -38,7 +38,7 @@ public class Elevator extends Subsystem{
 	private double error;
 	private double previousError;
     
-    public Elevator() {
+    private Elevator() {
     	m_articJoy = new Joystick(Constants.JoystickPort);
     	m_encoder = new Encoder(Constants.EncoderPort1, Constants.EncoderPort2);
     	m_elevator = new CANTalon(Constants.ElevatorPort);
