@@ -24,7 +24,10 @@ public class Elevator extends Subsystem{
 	/**
 	 * @return Drive subsystem instance
 	 */
-    public static Elevator getInstance() {
+    public static synchronized Elevator getInstance() {
+    	if (elevator_instance == null) {
+    		elevator_instance = new Elevator();
+    	}
         return elevator_instance;
     }
     
