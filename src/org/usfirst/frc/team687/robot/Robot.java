@@ -30,7 +30,7 @@ public class Robot extends IterativeRobot {
     }
     
     public void teleopInit() {
-    	elevator.stop();
+    	controllers.stop();
     }
 
     public void teleopPeriodic() {
@@ -45,6 +45,6 @@ public class Robot extends IterativeRobot {
     }
     
     public void disabledPeriodic() {
-    	elevator.stop();
+    	controllers.stop();
     }
 }

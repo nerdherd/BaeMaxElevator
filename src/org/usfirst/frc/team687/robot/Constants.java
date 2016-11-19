@@ -32,4 +32,8 @@ public class Constants {
 	private static double convertAccel(double inchesPerSecond2) {
 		return 2 * inchesPerSecond2 * Math.pow(100, 2);
 	}
+	
+	private static double convertSpeedToClk(double speed) {
+		return speed/100;
+	}
 }
