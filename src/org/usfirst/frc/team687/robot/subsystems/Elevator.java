@@ -1,7 +1,7 @@
 package org.usfirst.frc.team687.robot.subsystems;
 
 import org.usfirst.frc.team687.robot.Constants;
-import org.usfirst.frc.team687.robot.ToggleBoolean;
+import org.usfirst.frc.team687.robot.NerdyMath;
 import org.usfirst.frc.team687.robot.subsystems.controllers.MotionProfileGenerator;
 
 import edu.wpi.first.wpilibj.CANTalon;
@@ -34,22 +34,23 @@ public class Elevator extends Subsystem{
     private Joystick m_articJoy;
     private Encoder m_encoder;
     private CANTalon m_elevator;
-	private ToggleBoolean m_toggleButton;
-	private boolean m_gettingValue;
 	
 	private MotionProfileGenerator m_motionProfileGenerator;
-	private double error;
-	private double previousError;
+	private double m_error;
+	private double m_lastError;
+	
+	private double m_desiredPosition;
+	private double m_startingTime;
 	
 	private double currentVelocity;
 	private double previousVelocity;
-	private double deltaVelocity;
 	private double previousAccel;
 	private double previousDecel;
+	private double acceleration;
 	
-	private double maxVelocity = 0;
-	private double maxAccel = 0;
-	private double maxDecel = 0;
+	private double maxVelocity;
+	private double maxAccel;
+	private double maxDecel;
     
     private Elevator() {
     	m_articJoy = new Joystick(Constants.JoystickPort);
@@ -57,89 +58,109 @@ public class Elevator extends Subsystem{
     	m_elevator = new CANTalon(Constants.ElevatorPort);
     	m_elevator.changeControlMode(TalonControlMode.PercentVbus);
     	
-    	m_toggleButton.set(false);
-    	m_gettingValue = false;
-    	
-    	currentVelocity = 0;
-    	previousVelocity = 0;
-    	deltaVelocity = 0;
-    	previousAccel = 0;
-    	previousDecel = 0;
+    	m_desiredPosition = Constants.kSecondTapeMarkerPosition;
     	
     	m_motionProfileGenerator = MotionProfileGenerator.getInstance();
-    }
-    
-    private void toggleButtons() {
-		if (m_articJoy.getRawButton(Constants.button)){
-			m_toggleButton.set(!m_gettingValue);
-		}
-		m_gettingValue = m_toggleButton.get();
+		m_motionProfileGenerator.generateProfile(m_desiredPosition - getCurrentPosition());
+    	
+		m_startingTime = 0;
+		
+    	currentVelocity = 0;
+    	previousVelocity = 0;
+    	previousAccel = 0;
+    	previousDecel = 0;
+    	acceleration = 0;
+    	
+    	maxVelocity = 0;
+    	maxAccel = 0;
+    	maxDecel = 0;
     }
     
     /**
-     * Limits the given input to the given magnitude.
+     * @return raw unscaled encoder value
      */
-    private double limit(double v, double limit) {
-        return (Math.abs(v) < limit) ? v : limit * (v < 0 ? -1 : 1);
+    private double getCurrentPosition() {
+    	return m_encoder.getRaw();
     }
     
-    @Override 
-    public void update() {
-//    	toggleButtons();
-//    	double desiredPosition;
-//    	double m_startingTime = 0;
-//    	if (m_gettingValue) {
-//    		desiredPosition = SmartDashboard.getNumber("Desired Position");
-//    		m_startingTime = Timer.getFPGATimestamp();
-//    		m_motionProfileGenerator.generateProfile(desiredPosition - m_encoder.getRaw());
-//    	} else {
-//    		if (error != 0) {
-//    			previousError = error;
-//    		} else {
-//    			previousError = 0;
-//    		}
-//    		double currentTime = Timer.getFPGATimestamp() - m_startingTime;
-//    		double goalVelocity = m_motionProfileGenerator.readVelocity(currentTime);
-//    		double goalAcceleration = m_motionProfileGenerator.readAcceleration(currentTime);
-//    		double currentVelocity = m_encoder.getRate() / 100;
-//    		error = goalVelocity - currentVelocity;
-//    		double pow = Constants.kP * error 
-//    				+ Constants.kD * ((error - previousError) / currentTime - goalVelocity) 
-//    				+ Constants.kV * goalVelocity + Constants.kA * goalAcceleration;
-//    		m_elevator.set(pow);
-//    	}
-//		
-//		TODO: MEASURE THE MAX VELOCITY AND MAX ACCELERATION OF ELEVATOR
-    	m_elevator.set(limit(m_articJoy.getY(), 1.0));
+    /**
+     * @return velocity in ticks / 10 ms (clock speed)
+     */
+    private double getCurrentVelocity() {
+    	return NerdyMath.scaleVelocity(m_encoder.getRate());
     }
     
-    @Override
-    public void reportState() {
-    	SmartDashboard.putNumber("Current Position", m_encoder.getRaw());
-    	
-    	// for measuring max velocity and acceleration in ticks per second
+    /**
+     * Record the max acceleration, deceleration, and velocity during a single motion
+     */
+    private void recordSystemConstants() {
+    	// update each iteration
     	previousVelocity = currentVelocity;
-    	previousAccel = deltaVelocity;
-    	previousDecel = deltaVelocity;
-    	currentVelocity = m_encoder.getRate();
-		deltaVelocity = currentVelocity - previousVelocity;
+    	previousAccel = acceleration;
+    	previousDecel = acceleration;
+    	currentVelocity = getCurrentVelocity();
+		acceleration = (currentVelocity - previousVelocity) / Constants.kLoopFrequency;
 		
+		// record peak values for acceleration, velocity, and deceleration
     	if (currentVelocity > previousVelocity) {
-    		if (deltaVelocity > previousAccel) {
-    			maxAccel = deltaVelocity;
+    		if (acceleration > previousAccel) {
+    			maxAccel = acceleration;
     		}
     		maxVelocity = currentVelocity;
     	} else if (currentVelocity < previousVelocity) {
-    		if (deltaVelocity < previousDecel) {
-    			maxDecel = deltaVelocity;
+    		if (acceleration < previousDecel) {
+    			maxDecel = acceleration;
     		}
     	}
+    	
     	SmartDashboard.putNumber("Current Velocity", currentVelocity);
-    	SmartDashboard.putNumber("Current Acceleration", deltaVelocity);
+    	SmartDashboard.putNumber("Current Acceleration", acceleration);
     	
     	SmartDashboard.putNumber("Max Velocity", maxVelocity);
     	SmartDashboard.putNumber("Max Acceleration", maxAccel);
     	SmartDashboard.putNumber("Max Deceleration", maxDecel);
+    	
+    	SmartDashboard.putNumber("Calculated kV", 1.0 / maxVelocity);
+    }
+    
+    
+    @Override 
+    public void update() {
+    	if (m_articJoy.getRawButton(Constants.updatePositionButton)) {
+    		m_desiredPosition = SmartDashboard.getNumber("Desired Position");
+    		m_startingTime = Timer.getFPGATimestamp();
+    		m_motionProfileGenerator.generateProfile(m_desiredPosition - getCurrentPosition());
+    	} else {
+    		if (m_error != 0) {
+    			m_lastError = m_error;
+    		} else {
+    			m_lastError = 0;
+    		}
+    		double currentTime = Timer.getFPGATimestamp() - m_startingTime;
+    		double goalVelocity = m_motionProfileGenerator.readVelocity(currentTime);
+    		double goalAcceleration = m_motionProfileGenerator.readAcceleration(currentTime);
+    		double setpointPos = m_motionProfileGenerator.readDistance(currentTime);
+    		double actualPos = getCurrentPosition();
+    		m_error = setpointPos - actualPos;
+    		double pow = Constants.kP * m_error 
+    				+ Constants.kD * ((m_error - m_lastError) / currentTime - goalVelocity)
+    				+ Constants.kV * goalVelocity 
+    				+ Constants.kA * goalAcceleration;
+
+    		m_elevator.set(pow);
+    	}
+		
+//		TODO: MEASURE THE MAX VELOCITY AND MAX ACCELERATION OF ELEVATOR
+    	if (getCurrentPosition() < 5000) {
+    		m_elevator.set(1.0);
+    	}
+    }
+    
+    @Override
+    public void reportState() {
+    	SmartDashboard.putNumber("Current Position", getCurrentPosition());
+    	
+    	recordSystemConstants();
     }
     
     @Override 

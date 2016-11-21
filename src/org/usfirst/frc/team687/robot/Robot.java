@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 public class Robot extends IterativeRobot {
 	
 	Elevator elevator = Elevator.getInstance();
-    MultiLooper controllers = new MultiLooper("Controllers", Constants.kClk);
+    MultiLooper controllers = new MultiLooper("Controllers", Constants.kLoopFrequency);
     
 	SmartDashboardInteractions SDI = new SmartDashboardInteractions();
 	

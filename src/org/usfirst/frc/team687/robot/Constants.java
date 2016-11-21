@@ -8,38 +8,30 @@ package org.usfirst.frc.team687.robot;
  */
 public class Constants {
 	
-	public final static double kClk = 1/100.0;
-	public static double kMaxVelocity = convertVelocity(72.0);
-	public static double kMaxAccel = convertAccel(120.0);
-	public static double kMaxDecel = -convertAccel(120.0);
-	public static double kP = 1.0;
-	public static double kI = 1.5;
-	public static double kD = 0.0;
-	public static double kA = 6.0E-4;
-	public static double kV = 0.02;
-	public static double desiredPosition = 5627.0;
+	public final static double kLoopFrequency = 1/100.0;
+	public final static double kMaxVelocity = 0;
+	public final static double kMaxAccel = 0;
+	public static double kMaxDecel = 0;
 	
-	public static int EncoderPort1 = 8;
-	public static int EncoderPort2 = 9;
+	// feedforward terms
+	public final static double kA = 0; // acceleration constant that tells your controller to add a little extra power to accelerate, and a little less to decelerate
+	public final static double kV = 0; // a unit conversion between real-world velocities and motor power (tune this first)
 	
-	public static int JoystickPort = 1;
-	public static int ElevatorPort = 1;
+	// feedback gains
+	public final static double kP = 0; // can be really high because error is already small
+	public final static double kI = 0; // add if needed (usually for end)
+	public final static double kD = 0; // add if needed
 	
-	public static int button = 1;
+	public final static double kSecondTapeMarkerPosition = 5627.0;
 	
-	private static double convertVelocity(double inchesPerSecond) {
-		return 2 * inchesPerSecond * 100;
-	}
+	public static double desiredPosition;
 	
-	private static double convertAccel(double inchesPerSecond2) {
-		return 2 * inchesPerSecond2 * Math.pow(100, 2);
-	}
+	public final static int EncoderPort1 = 8;
+	public final static int EncoderPort2 = 9;
 	
-	private static double convertSpeedClk(double speed) {
-		return speed/100;
-	}
+	public final static int JoystickPort = 1;
+	public final static int ElevatorPort = 1;
 	
-	private static double convertAccelClk(double accel) {
-		return accel/Math.pow(100, 2);
-	}
+	public final static int updatePositionButton = 1;
+	
 }

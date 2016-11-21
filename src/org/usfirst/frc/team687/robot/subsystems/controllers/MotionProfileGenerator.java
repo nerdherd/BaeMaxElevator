@@ -31,7 +31,7 @@ public class MotionProfileGenerator {
 	private double maxVelocity = Constants.kMaxVelocity;
 	private double maxAccel = Constants.kMaxAccel;
 	private double maxDecel = Constants.kMaxDecel;
-	private double clk = Constants.kClk; //the period that the multilooper runs at
+	private double clk = Constants.kLoopFrequency; //the period that the multilooper runs at
 
 	private ArrayList<Double> time_data = new ArrayList<Double>();
 	private ArrayList<Double> velocity_data = new ArrayList<Double>();
@@ -39,24 +39,24 @@ public class MotionProfileGenerator {
 	private ArrayList<Double> acceleration_data = new ArrayList<Double>();
 
 	/**
-	 * Generate a trapezoidal motion profile
+	 * Generate a trapezoidal motion profile using basic kinematic equations
 	 * 
-	 * @param distance
+	 * @param distance desired
 	 */
 	public void generateProfile(double distance) {
 		double time;
 		double x;
 		double v = 0;
 		
-		SmartDashboard.putNumber("Desired Distance", distance);
+		SmartDashboard.putNumber("Calculated Desired Distance", distance);
 		double accelTime = maxVelocity/maxAccel;
-		SmartDashboard.putNumber("Acceleration Time", accelTime);
+		SmartDashboard.putNumber("Calculated Acceleration Time", accelTime);
 		double accelAndCruiseTime = distance/maxVelocity;
-		SmartDashboard.putNumber("Acceleration + Cruise Time", accelAndCruiseTime);
+		SmartDashboard.putNumber("Calculated Acceleration + Cruise Time", accelAndCruiseTime);
 		double decelTime = -maxVelocity/maxDecel;
-		SmartDashboard.putNumber("Deceleration Time", decelTime);
+		SmartDashboard.putNumber("Calculated Deceleration Time", decelTime);
 		double end = accelAndCruiseTime + decelTime;
-		SmartDashboard.putNumber("Expected End Time", end);
+		SmartDashboard.putNumber("Calculated Expected End Time", end);
 		
 		boolean triangular = isTriangular(distance);
 		SmartDashboard.putBoolean("Is triangular", triangular);
@@ -80,7 +80,7 @@ public class MotionProfileGenerator {
 			}
 			addData(time, v, x, maxDecel);
 		}
-		SmartDashboard.putNumber("Actual time to finish motion", time);
+		SmartDashboard.putNumber("Calculated Acutal End Time", time);
 	}
 	
 	/**
@@ -101,7 +101,6 @@ public class MotionProfileGenerator {
 	/**
 	 * Check if the maximum velocity can actually be reached
 	 * If the maximum velocity can't be reached, adjust it to the final velocity that it can reach with some tolerance
-	 * Maximum velocity can't be reached = triangular motion profile
 	 */
 	private boolean isTriangular(double distance) {
 		double mid = distance/2;
@@ -115,7 +114,7 @@ public class MotionProfileGenerator {
 	}
 
 	/**
-	 * @param time
+	 * @param time index
 	 * @return goal velocity
 	 */
 	public double readVelocity(double time) {
@@ -123,7 +122,7 @@ public class MotionProfileGenerator {
 	}
 	
 	/**
-	 * @param time
+	 * @param time index
 	 * @return goal distance
 	 */
 	public double readDistance(double time) {
@@ -131,7 +130,7 @@ public class MotionProfileGenerator {
 	}
 	
 	/**
-	 * @param time
+	 * @param time index
 	 * @return goal acceleration
 	 */
 	public double readAcceleration(double time) {

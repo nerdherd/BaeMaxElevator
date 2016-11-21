@@ -16,8 +16,7 @@ public class ToggleBoolean {
 	
 	Timer timer = new Timer();
 	
-	public ToggleBoolean(){
-	}
+	public ToggleBoolean(){ /* totes ma goats */ }
 	
 	public void set(boolean state){
 		// max time for holding down button is 1.0 seconds
