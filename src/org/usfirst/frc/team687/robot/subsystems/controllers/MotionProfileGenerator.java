@@ -7,7 +7,7 @@ import org.usfirst.frc.team687.robot.Constants;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
- * Trapezoidal motion profile generator for smoother distance control
+ * Trapezoidal motion profile generator
  * 
  * @author tedfoodlin
  *
@@ -31,7 +31,7 @@ public class MotionProfileGenerator {
 	private double maxVelocity = Constants.kMaxVelocity;
 	private double maxAccel = Constants.kMaxAccel;
 	private double maxDecel = Constants.kMaxDecel;
-	private double clk = Constants.kLoopFrequency; //the period that the multilooper runs at
+	private double clk = Constants.kLoopFrequency;
 
 	private ArrayList<Double> time_data = new ArrayList<Double>();
 	private ArrayList<Double> velocity_data = new ArrayList<Double>();
@@ -106,7 +106,7 @@ public class MotionProfileGenerator {
 		double mid = distance/2;
 		double vFinal = Math.pow(2 * maxAccel * mid, 0.5);
 		if (vFinal < maxVelocity){
-			maxVelocity = vFinal - (maxVelocity/10);
+			maxVelocity = vFinal - (maxVelocity/20);
 			return true;
 		} else {
 			return false;

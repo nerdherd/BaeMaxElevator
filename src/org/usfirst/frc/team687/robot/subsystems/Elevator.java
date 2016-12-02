@@ -91,6 +91,44 @@ public class Elevator extends Subsystem{
     }
     
     /**
+     * Set elevator motor power to a value (between -1.0 to 1.0 in PercentVBus TalonControlMode)
+     * 
+     * @param power
+     */
+    private void setElevatorPower(double pow) {
+    	m_elevator.set(pow);
+    }
+    
+    /**
+     * Update the setpoint position and create a new motion profile for that setpoint
+     */
+    private void setNewPosition() {
+		m_desiredPosition = SmartDashboard.getNumber("Desired Position");
+		m_startingTime = Timer.getFPGATimestamp();
+		m_motionProfileGenerator.generateProfile(m_desiredPosition - getCurrentPosition());
+    }
+    
+    /**
+     * Calculate the input power for motor controller at a given timestamp
+     * 
+     * @return pow
+     */
+    private double calculatePow() {
+		m_lastError = m_error;
+		double currentTime = Timer.getFPGATimestamp() - m_startingTime;
+		double goalVelocity = m_motionProfileGenerator.readVelocity(currentTime);
+		double goalAcceleration = m_motionProfileGenerator.readAcceleration(currentTime);
+		double setpointPos = m_motionProfileGenerator.readDistance(currentTime);
+		double actualPos = getCurrentPosition();
+		m_error = setpointPos - actualPos;
+		double pow = Constants.kP * m_error 
+				+ Constants.kD * ((m_error - m_lastError) / currentTime - goalVelocity)
+				+ Constants.kV * goalVelocity 
+				+ Constants.kA * goalAcceleration;
+		return pow;
+    }
+    
+    /**
      * Record the max acceleration, deceleration, and velocity during a single motion
      */
     private void recordSystemConstants() {
@@ -126,40 +164,23 @@ public class Elevator extends Subsystem{
     
     @Override 
     public void update() {
-    	if (m_articJoy.getRawButton(Constants.updatePositionButton)) {
-    		m_desiredPosition = SmartDashboard.getNumber("Desired Position");
-    		m_startingTime = Timer.getFPGATimestamp();
-    		m_motionProfileGenerator.generateProfile(m_desiredPosition - getCurrentPosition());
-    	} else {
-    		if (m_error != 0) {
-    			m_lastError = m_error;
-    		} else {
-    			m_lastError = 0;
-    		}
-    		double currentTime = Timer.getFPGATimestamp() - m_startingTime;
-    		double goalVelocity = m_motionProfileGenerator.readVelocity(currentTime);
-    		double goalAcceleration = m_motionProfileGenerator.readAcceleration(currentTime);
-    		double setpointPos = m_motionProfileGenerator.readDistance(currentTime);
-    		double actualPos = getCurrentPosition();
-    		m_error = setpointPos - actualPos;
-    		double pow = Constants.kP * m_error 
-    				+ Constants.kD * ((m_error - m_lastError) / currentTime - goalVelocity)
-    				+ Constants.kV * goalVelocity 
-    				+ Constants.kA * goalAcceleration;
-
-    		m_elevator.set(pow);
-    	}
-		
+//    	if (m_articJoy.getRawButton(Constants.updatePositionButton))
+//    		setNewPosition();
+//    	else
+//    		setElevatorPower(calculatePow());
+//    	
 //		TODO: MEASURE THE MAX VELOCITY AND MAX ACCELERATION OF ELEVATOR
-    	if (getCurrentPosition() < 5000) {
-    		m_elevator.set(1.0);
-    	}
+//    	if (getCurrentPosition() < 5000) {
+//    		setElevatorPower(1.0);
+//    	}
+//    	
+//		TODO: TEST THE ELEVATOR TO SEE IF IT WORKS AT FULL POWER
+    	setElevatorPower(m_articJoy.getY());
     }
     
     @Override
     public void reportState() {
     	SmartDashboard.putNumber("Current Position", getCurrentPosition());
-    	
     	recordSystemConstants();
     }
     
@@ -170,7 +191,6 @@ public class Elevator extends Subsystem{
     }
     
     @Override
-    public void zeroSensors() {
-    	
-    }
+    public void zeroSensors() { /* No need to zero encoder */ }
+    
 }
