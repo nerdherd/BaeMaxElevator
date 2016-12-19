@@ -51,6 +51,8 @@ public class Elevator extends Subsystem{
 	private double maxVelocity;
 	private double maxAccel;
 	private double maxDecel;
+	
+	private boolean m_finished;
     
     private Elevator() {
     	m_articJoy = new Joystick(Constants.JoystickPort);
@@ -74,6 +76,8 @@ public class Elevator extends Subsystem{
     	maxVelocity = 0;
     	maxAccel = 0;
     	maxDecel = 0;
+    	
+    	m_finished = false;
     }
     
     /**
@@ -103,6 +107,7 @@ public class Elevator extends Subsystem{
      * Update the setpoint position and create a new motion profile for that setpoint
      */
     private void setNewPosition() {
+    	m_motionProfileGenerator = null;
 		m_desiredPosition = SmartDashboard.getNumber("Desired Position");
 		m_startingTime = Timer.getFPGATimestamp();
 		m_motionProfileGenerator.generateProfile(m_desiredPosition - getCurrentPosition());
@@ -140,47 +145,49 @@ public class Elevator extends Subsystem{
 		acceleration = (currentVelocity - previousVelocity) / Constants.kLoopFrequency;
 		
 		// record peak values for acceleration, velocity, and deceleration
-    	if (currentVelocity > previousVelocity) {
-    		if (acceleration > previousAccel) {
+    	if (currentVelocity > previousVelocity && currentVelocity > maxVelocity) {
+    		if (acceleration > previousAccel && acceleration > maxAccel) {
     			maxAccel = acceleration;
     		}
     		maxVelocity = currentVelocity;
     	} else if (currentVelocity < previousVelocity) {
-    		if (acceleration < previousDecel) {
+    		if (acceleration < previousDecel && acceleration < maxDecel) {
     			maxDecel = acceleration;
     		}
     	}
-    	
-    	SmartDashboard.putNumber("Current Velocity", currentVelocity);
-    	SmartDashboard.putNumber("Current Acceleration", acceleration);
     	
     	SmartDashboard.putNumber("Max Velocity", maxVelocity);
     	SmartDashboard.putNumber("Max Acceleration", maxAccel);
     	SmartDashboard.putNumber("Max Deceleration", maxDecel);
     	
-    	SmartDashboard.putNumber("Calculated kV", 1.0 / maxVelocity);
+    	SmartDashboard.putNumber("Calculated kV", 0.5 / maxVelocity);
     }
     
     
     @Override 
     public void update() {
-//    	if (m_articJoy.getRawButton(Constants.updatePositionButton))
+//		TODO: TEST MOTION PROFILED CONTROL
+//    	if (m_articJoy.getRawButton(Constants.updatePositionButton)) {
 //    		setNewPosition();
-//    	else
+//    	}
+//    	else {
 //    		setElevatorPower(calculatePow());
-//    	
-//		TODO: MEASURE THE MAX VELOCITY AND MAX ACCELERATION OF ELEVATOR
-//    	if (getCurrentPosition() < 5000) {
-//    		setElevatorPower(1.0);
 //    	}
 //    	
-//		TODO: TEST THE ELEVATOR TO SEE IF IT WORKS AT FULL POWER
-    	setElevatorPower(m_articJoy.getY());
+//		TODO: MEASURE MAX ACCELERATION OF ELEVATOR
+    	if (getCurrentPosition() <= Constants.kSecondTapeMarkerPosition && m_finished == false) {
+    		setElevatorPower(-0.5);
+    	} else if (getCurrentPosition() > Constants.kSecondTapeMarkerPosition) {
+    		m_finished = true;
+    		setElevatorPower(0);
+    	}
     }
     
     @Override
     public void reportState() {
     	SmartDashboard.putNumber("Current Position", getCurrentPosition());
+    	SmartDashboard.putNumber("Current Velocity", getCurrentVelocity());
+    	SmartDashboard.putNumber("Current Acceleration", acceleration);
     	recordSystemConstants();
     }
     
@@ -191,6 +198,8 @@ public class Elevator extends Subsystem{
     }
     
     @Override
-    public void zeroSensors() { /* No need to zero encoder */ }
+    public void zeroSensors() {
+    	m_encoder.reset();
+    }
     
 }

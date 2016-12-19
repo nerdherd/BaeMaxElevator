@@ -35,7 +35,7 @@ public class MotionProfileGenerator {
 
 	private ArrayList<Double> time_data = new ArrayList<Double>();
 	private ArrayList<Double> velocity_data = new ArrayList<Double>();
-	private ArrayList<Double> distance_data = new ArrayList<Double>();
+	private ArrayList<Double> position_data = new ArrayList<Double>();
 	private ArrayList<Double> acceleration_data = new ArrayList<Double>();
 
 	/**
@@ -94,7 +94,7 @@ public class MotionProfileGenerator {
 	private void addData(double time, double v, double x, double acceleration) {
 		time_data.add(time);
 		velocity_data.add(v);
-		distance_data.add(x);
+		position_data.add(x);
 		acceleration_data.add(acceleration);
 	}
 	
@@ -126,7 +126,7 @@ public class MotionProfileGenerator {
 	 * @return goal distance
 	 */
 	public double readDistance(double time) {
-		return distance_data.get((int)(time/clk));
+		return position_data.get((int)(time/clk));
 	}
 	
 	/**

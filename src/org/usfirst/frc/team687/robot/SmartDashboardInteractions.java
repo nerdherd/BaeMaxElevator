@@ -24,7 +24,7 @@ public class SmartDashboardInteractions {
 	}
 	
 	/**
-	 * Update editable constants
+	 * Update editable values
 	 */
 	public void update() {
     	Constants.desiredPosition = SmartDashboard.getNumber("Desired Position");
