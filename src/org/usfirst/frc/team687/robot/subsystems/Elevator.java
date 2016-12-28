@@ -130,7 +130,7 @@ public class Elevator extends Subsystem{
 				+ Constants.kD * ((m_error - m_lastError) / currentTime - goalVelocity)
 				+ Constants.kV * goalVelocity 
 				+ Constants.kA * goalAcceleration;
-		return pow;
+		return NerdyMath.limit(pow, 0.5);
     }
     
     /**
