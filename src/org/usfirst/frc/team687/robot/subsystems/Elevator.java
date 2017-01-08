@@ -4,8 +4,9 @@ import org.usfirst.frc.team687.robot.Constants;
 import org.usfirst.frc.team687.robot.NerdyMath;
 import org.usfirst.frc.team687.robot.subsystems.controllers.MotionProfileGenerator;
 
-import edu.wpi.first.wpilibj.CANTalon;
-import edu.wpi.first.wpilibj.CANTalon.TalonControlMode;
+import com.ctre.CANTalon;
+import com.ctre.CANTalon.TalonControlMode;
+
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Timer;
